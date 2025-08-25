@@ -37,6 +37,7 @@ src/
 
 ## 開発コマンド
 
+### ローカル環境
 ```bash
 # 開発サーバー起動
 npm run dev
@@ -52,6 +53,39 @@ npm run preview
 
 # ポート5000終了
 npm run kill
+```
+
+### Docker環境
+
+#### Docker Compose使用
+```bash
+# Docker Composeで起動
+docker-compose up
+
+# バックグラウンドで起動
+docker-compose up -d
+
+# 停止
+docker-compose down
+
+# イメージを再ビルドして起動
+docker-compose up --build
+```
+
+#### Docker単体使用
+```bash
+# イメージをビルド
+docker build -t content-index-page .
+
+# コンテナ起動
+docker run -p 5173:5173 -v $(pwd):/app -v /app/node_modules content-index-page
+
+# バックグラウンドで起動
+docker run -d -p 5173:5173 -v $(pwd):/app -v /app/node_modules --name content-index content-index-page
+
+# コンテナ停止・削除
+docker stop content-index
+docker rm content-index
 ```
 
 ## デザイン仕様
@@ -98,12 +132,36 @@ npm run kill
 - バンドルサイズ最適化
 - コンポーネントの適切なメモ化
 
+## Docker対応
+
+アプリケーションはDockerコンテナで実行可能です。
+
+### 構成
+- **Dockerfile**: Node.js 20 Alpine imageベース
+- **docker-compose.yml**: 開発環境用設定
+- **.dockerignore**: 不要ファイルの除外設定
+
+### 特徴
+- Vite開発サーバーをポート5173で公開
+- ホットリロード対応（ボリュームマウント）
+- 依存関係はコンテナ内で管理
+
 ## トラブルシューティング
 
 ### 開発サーバーが起動しない
 ```bash
 npm run kill  # ポート5000を解放
 npm run dev   # 再起動
+```
+
+### Dockerでの問題
+```bash
+# コンテナとイメージをクリア
+docker-compose down
+docker system prune -f
+
+# 再ビルド
+docker-compose up --build
 ```
 
 ### ビルドエラー

@@ -1,0 +1,15 @@
+# Ignore everything by default
+*
+
+# Allow necessary files for build
+!package.json
+!package-lock.json
+!src/
+!public/
+!index.html
+!vite.config.ts
+!tsconfig.json
+!tailwind.config.js
+!components.json
+!theme.json
+!runtime.config.json

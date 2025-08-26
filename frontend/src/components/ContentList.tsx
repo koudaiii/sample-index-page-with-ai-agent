@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Star, Heart, ShoppingCart } from "@phosphor-icons/react"
+import { API_ENDPOINTS } from "@/lib/config"
 
 interface ContentItem {
   id: string
@@ -16,73 +18,79 @@ interface ContentItem {
   isRecommended?: boolean
 }
 
-const contentItems: ContentItem[] = [
-  {
-    id: "1",
-    title: "プレミアムワイヤレスヘッドホン",
-    price: 15800,
-    originalPrice: 19800,
-    rating: 4.8,
-    imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
-    category: "オーディオ",
-    isSale: true,
-    isRecommended: true
-  },
-  {
-    id: "2",
-    title: "スマートウォッチ Gen5",
-    price: 28900,
-    rating: 4.6,
-    imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop",
-    category: "ウェアラブル",
-    isNew: true
-  },
-  {
-    id: "3",
-    title: "ミニマリストバックパック",
-    price: 8900,
-    originalPrice: 12900,
-    rating: 4.9,
-    imageUrl: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop",
-    category: "バッグ",
-    isSale: true
-  },
-  {
-    id: "4",
-    title: "アロマディフューザー",
-    price: 5400,
-    rating: 4.7,
-    imageUrl: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=400&fit=crop",
-    category: "ホーム",
-    isRecommended: true
-  },
-  {
-    id: "5",
-    title: "エコフレンドリー水筒",
-    price: 3200,
-    rating: 4.5,
-    imageUrl: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400&h=400&fit=crop",
-    category: "キッチン",
-    isNew: true
-  },
-  {
-    id: "6",
-    title: "ワイヤレス充電パッド",
-    price: 4800,
-    originalPrice: 6800,
-    rating: 4.4,
-    imageUrl: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400&h=400&fit=crop",
-    category: "テック",
-    isSale: true
-  }
-]
-
 interface ContentListProps {
   title: string
   items?: ContentItem[]
 }
 
-export function ContentList({ title, items = contentItems }: ContentListProps) {
+export function ContentList({ title, items }: ContentListProps) {
+  const [contentItems, setContentItems] = useState<ContentItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (items) {
+      setContentItems(items)
+      setLoading(false)
+      return
+    }
+
+    const fetchContent = async () => {
+      try {
+        const response = await fetch(API_ENDPOINTS.CONTENT)
+        if (!response.ok) {
+          throw new Error('Failed to fetch content')
+        }
+        const data = await response.json()
+        setContentItems(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchContent()
+  }, [items])
+
+  if (loading) {
+    return (
+      <section className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
+          <Button variant="ghost" className="text-accent hover:text-accent/80">
+            すべて見る
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, index) => (
+            <Card key={index} className="overflow-hidden animate-pulse">
+              <div className="aspect-square bg-gray-300" />
+              <CardContent className="p-4 space-y-3">
+                <div className="h-4 bg-gray-300 rounded w-3/4" />
+                <div className="h-4 bg-gray-300 rounded w-1/2" />
+                <div className="h-4 bg-gray-300 rounded w-1/4" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  if (error) {
+    return (
+      <section className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
+        </div>
+        <div className="text-center text-red-600">
+          Error loading content: {error}
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="space-y-6">
       <div className="flex items-center justify-between">
@@ -93,7 +101,7 @@ export function ContentList({ title, items = contentItems }: ContentListProps) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {items.map((item) => (
+        {contentItems.map((item) => (
           <Card key={item.id} className="group overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer">
             <div className="relative aspect-square overflow-hidden">
               <img

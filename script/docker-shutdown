@@ -1,0 +1,12 @@
+#!/bin/bash
+
+## Check docker-compose exists
+if ! command -v docker-compose > /dev/null; then
+  echo "docker-compose is not installed"
+  exit 1
+fi
+
+## stop all docker containers
+docker-compose down
+
+echo "All containers stopped successfully"

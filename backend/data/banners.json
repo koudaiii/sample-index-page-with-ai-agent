@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1",
+    "title": "新春セール開催中",
+    "subtitle": "最大50%OFF！人気商品をお得にゲット",
+    "imageUrl": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=400&fit=crop",
+    "tag": "特別価格",
+    "color": "bg-red-500"
+  },
+  {
+    "id": "2",
+    "title": "春の新作コレクション",
+    "subtitle": "トレンドアイテムが続々登場",
+    "imageUrl": "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800&h=400&fit=crop",
+    "tag": "新着",
+    "color": "bg-green-500"
+  },
+  {
+    "id": "3",
+    "title": "プレミアム会員限定",
+    "subtitle": "特別な商品とサービスをお楽しみください",
+    "imageUrl": "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&h=400&fit=crop",
+    "tag": "限定",
+    "color": "bg-purple-500"
+  }
+]

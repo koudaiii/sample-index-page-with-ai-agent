@@ -1,0 +1,60 @@
+[
+  {
+    "id": "1",
+    "title": "プレミアムワイヤレスヘッドホン",
+    "price": 15800,
+    "originalPrice": 19800,
+    "rating": 4.8,
+    "imageUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
+    "category": "オーディオ",
+    "isSale": true,
+    "isRecommended": true
+  },
+  {
+    "id": "2",
+    "title": "スマートウォッチ Gen5",
+    "price": 28900,
+    "rating": 4.6,
+    "imageUrl": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop",
+    "category": "ウェアラブル",
+    "isNew": true
+  },
+  {
+    "id": "3",
+    "title": "ミニマリストバックパック",
+    "price": 8900,
+    "originalPrice": 12900,
+    "rating": 4.9,
+    "imageUrl": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop",
+    "category": "バッグ",
+    "isSale": true
+  },
+  {
+    "id": "4",
+    "title": "アロマディフューザー",
+    "price": 5400,
+    "rating": 4.7,
+    "imageUrl": "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=400&fit=crop",
+    "category": "ホーム",
+    "isRecommended": true
+  },
+  {
+    "id": "5",
+    "title": "エコフレンドリー水筒",
+    "price": 3200,
+    "rating": 4.5,
+    "imageUrl": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400&h=400&fit=crop",
+    "category": "キッチン",
+    "isNew": true
+  },
+  {
+    "id": "6",
+    "title": "ワイヤレス充電パッド",
+    "price": 4800,
+    "originalPrice": 6800,
+    "rating": 4.4,
+    "imageUrl": "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400&h=400&fit=crop",
+    "category": "テック",
+    "isSale": true
+  }
+]

@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ChevronLeft, ChevronRight } from "@phosphor-icons/react"
+import { API_ENDPOINTS } from "@/lib/config"
 
 interface BannerItem {
   id: string
@@ -13,43 +14,40 @@ interface BannerItem {
   color: string
 }
 
-const bannerItems: BannerItem[] = [
-  {
-    id: "1",
-    title: "新春セール開催中",
-    subtitle: "最大50%OFF！人気商品をお得にゲット",
-    imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=400&fit=crop",
-    tag: "特別価格",
-    color: "bg-red-500"
-  },
-  {
-    id: "2", 
-    title: "春の新作コレクション",
-    subtitle: "トレンドアイテムが続々登場",
-    imageUrl: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=800&h=400&fit=crop",
-    tag: "新着",
-    color: "bg-green-500"
-  },
-  {
-    id: "3",
-    title: "プレミアム会員限定",
-    subtitle: "特別な商品とサービスをお楽しみください",
-    imageUrl: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=800&h=400&fit=crop",
-    tag: "限定",
-    color: "bg-purple-500"
-  }
-]
-
 export function Banner() {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [bannerItems, setBannerItems] = useState<BannerItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const response = await fetch(API_ENDPOINTS.BANNERS)
+        if (!response.ok) {
+          throw new Error('Failed to fetch banners')
+        }
+        const data = await response.json()
+        setBannerItems(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchBanners()
+  }, [])
+
+  useEffect(() => {
+    if (bannerItems.length === 0) return
+    
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % bannerItems.length)
     }, 3000)
 
     return () => clearInterval(timer)
-  }, [])
+  }, [bannerItems.length])
 
   const goToPrevious = () => {
     setCurrentIndex((prev) => (prev - 1 + bannerItems.length) % bannerItems.length)
@@ -57,6 +55,32 @@ export function Banner() {
 
   const goToNext = () => {
     setCurrentIndex((prev) => (prev + 1) % bannerItems.length)
+  }
+
+  if (loading) {
+    return (
+      <div className="relative w-full h-64 md:h-80 lg:h-96 overflow-hidden rounded-lg">
+        <Card className="relative h-full border-0 animate-pulse">
+          <div className="absolute inset-0 bg-gray-300" />
+        </Card>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="relative w-full h-64 md:h-80 lg:h-96 overflow-hidden rounded-lg">
+        <Card className="relative h-full border-0">
+          <div className="absolute inset-0 bg-red-100 flex items-center justify-center">
+            <p className="text-red-600">Error loading banners: {error}</p>
+          </div>
+        </Card>
+      </div>
+    )
+  }
+
+  if (bannerItems.length === 0) {
+    return null
   }
 
   const currentItem = bannerItems[currentIndex]

@@ -1,12 +1,31 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
+  # Frontend (Nginx + Built React)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
     ports:
-      - "5173:5173"
-    volumes:
-      - .:/app
-      - /app/node_modules
+      - "80:80"
+    depends_on:
+      - backend
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
+
+  # Backend (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/data:/app/data:ro
+    environment:
+      - DEBUG=false
+      - PORT=8000
+      - AZURE_AI_FOUNDRY_ENDPOINT=${AZURE_AI_FOUNDRY_ENDPOINT}
+      - AZURE_AI_FOUNDRY_API_KEY=${AZURE_AI_FOUNDRY_API_KEY}

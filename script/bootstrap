@@ -1,0 +1,23 @@
+#!/bin/bash
+
+## check node installed
+if ! type "node" > /dev/null; then
+  echo "node is not installed"
+  exit 1
+fi
+
+## check node version
+if ! node --version | grep -E "v(18|20|21|22|24)" > /dev/null; then
+  echo "node version should be 18, 20, 21, 22, or 24"
+  exit 1
+fi
+
+## check npm installed
+if ! type "npm" > /dev/null; then
+  echo "npm is not installed"
+  exit 1
+fi
+
+## move to frontend directory and install npm packages
+cd frontend
+npm ci

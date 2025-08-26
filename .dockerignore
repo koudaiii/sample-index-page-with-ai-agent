@@ -2,14 +2,12 @@
 *
 
 # Allow necessary files for build
-!package.json
-!package-lock.json
-!src/
-!public/
-!index.html
-!vite.config.ts
-!tsconfig.json
-!tailwind.config.js
-!components.json
-!theme.json
-!runtime.config.json
+!frontend/
+!nginx/
+!backend/data/
+
+# Deny unnecessary frontend files
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local

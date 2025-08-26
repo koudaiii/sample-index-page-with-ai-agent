@@ -1,0 +1,22 @@
+#!/bin/bash
+
+## Check docker-compose exists
+if ! command -v docker-compose > /dev/null; then
+  echo "docker-compose is not installed"
+  exit 1
+fi
+
+## display web urls
+echo "Docker Compose environment starting..."
+echo "Application: http://localhost:80"
+echo "Backend API: http://localhost:80/api/*"
+echo "API Documentation: http://localhost:80/docs"
+echo "Health Check: http://localhost:80/health"
+
+## run docker compose environment
+BACKEND_TARGET=production BACKEND_VOLUME_MODE=none DEBUG=false docker-compose up -d
+
+## show running containers
+echo ""
+echo "Running containers:"
+docker-compose ps

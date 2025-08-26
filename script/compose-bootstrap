@@ -1,0 +1,38 @@
+#!/bin/bash
+
+## check docker installed
+if ! type "docker" > /dev/null; then
+  echo "docker is not installed"
+  exit 1
+fi
+
+## check docker daemon running
+if ! docker info > /dev/null; then
+  echo "docker daemon is not running"
+  exit 1
+fi
+
+## check docker-compose installed
+if ! command -v docker-compose > /dev/null; then
+  echo "docker-compose is not installed"
+  exit 1
+fi
+
+## set production environment variables
+export BACKEND_TARGET=production
+export BACKEND_VOLUME_MODE=none
+export DEBUG=false
+
+## build docker images
+echo "Building Docker images..."
+BACKEND_TARGET=production BACKEND_VOLUME_MODE=none DEBUG=false docker-compose build
+
+## notify task is done
+echo ""
+echo "Success!"
+echo "Docker images are built"
+
+## notify user to run script/compose-server
+echo "Run 'script/compose-server' to start servers"
+echo "Application will be available on http://localhost:80"
+echo "API will be available on http://localhost:80/api/*"

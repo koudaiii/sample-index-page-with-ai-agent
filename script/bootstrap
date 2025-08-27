@@ -21,3 +21,13 @@ fi
 ## move to frontend directory and install npm packages
 cd frontend
 npm ci
+
+## check uv installed
+if ! type "uv" > /dev/null; then
+  echo "uv is not installed. Please install uv first: curl -LsSf https://astral.sh/uv/install.sh | sh"
+  exit 1
+fi
+
+## move to backend directory and install python packages with uv
+cd ../backend
+uv sync

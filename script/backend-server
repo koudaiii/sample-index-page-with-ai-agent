@@ -1,8 +1,8 @@
 #!/bin/bash
 
-## Check python is installed
-if ! command -v python3 > /dev/null; then
-  echo "python3 is not installed"
+## Check uv is installed
+if ! command -v uv > /dev/null; then
+  echo "uv is not installed. Please install uv first: curl -LsSf https://astral.sh/uv/install.sh | sh"
   exit 1
 fi
 
@@ -15,21 +15,12 @@ fi
 ## Change to backend directory
 cd backend
 
-## Check if virtual environment exists, create if not
-if [ ! -d "venv" ]; then
-  echo "Creating virtual environment..."
-  python3 -m venv venv
-fi
-
-## Activate virtual environment
-source venv/bin/activate
-
-## Install dependencies
-pip install -r requirements.txt
+## Install dependencies with uv
+uv sync
 
 ## display web url
 echo "Backend API running on http://localhost:8000"
 echo "API Documentation: http://localhost:8000/docs"
 
 ## Start the backend server
-exec uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+exec uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload

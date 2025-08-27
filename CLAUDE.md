@@ -42,6 +42,9 @@ frontend/              # フロントエンドソース
 │   ├── hooks/         # カスタムフック
 │   ├── lib/           # ユーティリティ関数
 │   └── styles/        # CSSファイル
+├── nginx/          # nginx
+│   ├── nginx.conf       # メイン設定
+│   └── default.conf     # サーバー設定とプロキシ
 ├── package.json       # npm 依存関係
 ├── vite.config.ts     # Vite 設定
 ├── tsconfig.json      # TypeScript 設定
@@ -59,9 +62,6 @@ backend/               # バックエンドソース
     ├── banners.json # バナーデータ
     └── content.json # コンテンツデータ
 
-nginx/                # Nginx 設定 (本番用)
-├── nginx.conf       # メイン設定
-└── default.conf     # サーバー設定とプロキシ
 
 script/               # 実行スクリプト
 ├── bootstrap         # フロントエンド環境セットアップ

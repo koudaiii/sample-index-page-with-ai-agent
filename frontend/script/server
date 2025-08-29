@@ -6,9 +6,5 @@ if ! command -v npm > /dev/null; then
   exit 1
 fi
 
-## display web url
-echo "Open http://localhost:5173"
-
 ## move to frontend directory and start the development server
-cd frontend
 exec npm run dev

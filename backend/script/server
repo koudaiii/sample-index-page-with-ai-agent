@@ -6,15 +6,6 @@ if ! command -v uv > /dev/null; then
   exit 1
 fi
 
-## Check if we're in backend directory
-if [ ! -f "backend/main.py" ]; then
-  echo "backend/main.py not found. Make sure you're in the project root directory"
-  exit 1
-fi
-
-## Change to backend directory
-cd backend
-
 ## Install dependencies with uv
 uv sync
 

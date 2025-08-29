@@ -1,32 +1,3 @@
-# Development stage
-FROM python:3.12-slim AS development
-
-# Install uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
-
-# Set working directory
-WORKDIR /app
-
-# Create uv cache directory
-RUN mkdir -p /app/.cache/uv && chmod 777 /app/.cache/uv
-ENV UV_CACHE_DIR=/app/.cache/uv
-
-# Copy dependency files first for better caching
-COPY pyproject.toml uv.lock* ./
-
-# Install Python dependencies
-RUN uv sync --frozen
-
-# Copy source code
-COPY . .
-
-# Expose port
-EXPOSE 8000
-
-# Start FastAPI server with reload for development
-CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
-
-# Production stage
 FROM python:3.12-slim AS production
 
 # Install uv

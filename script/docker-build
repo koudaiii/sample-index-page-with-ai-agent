@@ -18,11 +18,10 @@ if ! command -v docker-compose > /dev/null; then
   exit 1
 fi
 
-## display web urls
-echo "Docker Compose Environment:"
-echo "Frontend: http://localhost:80"
-echo "Backend API: http://localhost:8000"
-echo "API Documentation: http://localhost:8000/docs"
+## build docker images
+docker-compose build
 
-## run environment with docker-compose
-docker-compose up -d
+## notify task is done
+echo ""
+echo "Success!"
+echo "Docker images are built"

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+## check uv installed
+if ! type "uv" > /dev/null; then
+  echo "uv is not installed. Please install uv first: curl -LsSf https://astral.sh/uv/install.sh | sh"
+  exit 1
+fi
+
+uv sync

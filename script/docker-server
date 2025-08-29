@@ -1,10 +1,30 @@
 #!/bin/bash
 
+## check docker installed
+if ! type "docker" > /dev/null; then
+  echo "docker is not installed"
+  exit 1
+fi
+
+## check docker daemon running
+if ! docker info > /dev/null; then
+  echo "docker daemon is not running"
+  exit 1
+fi
+
 ## Check docker-compose exists
 if ! command -v docker-compose > /dev/null; then
   echo "docker-compose is not installed"
   exit 1
 fi
+
+## build docker images
+docker-compose build
+
+## notify task is done
+echo ""
+echo "Success!"
+echo "Docker images are built"
 
 ## display web urls
 echo "Docker Compose Environment:"

@@ -31,4 +31,4 @@ pids
 .file-manifest
 .devcontainer/
 
-.spark-workbench-id
+backend/__pycache__*

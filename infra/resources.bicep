@@ -10,6 +10,8 @@ param apiKey string
 @secure()
 param apiEndpoint string
 
+param viteApiBaseUrl string
+
 @description('Docker image for the app service')
 param dockerImage string
 
@@ -47,6 +49,10 @@ module appService 'br/public:avm/res/web/site:0.11.0' = {
         {
           name: 'API_ENDPOINT'
           value: apiEndpoint
+        }
+        {
+          name: 'VITE_API_BASE_URL'
+          value: viteApiBaseUrl
         }
         {
           name: 'WEBSITES_PORT'

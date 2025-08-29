@@ -18,6 +18,9 @@ param apiKey string
 @description('api endpoint for the app service')
 param apiEndpoint string
 
+@description('Vite API base URL for the frontend')
+param viteApiBaseUrl string = 'http://localhost:8000'
+
 @description('Tags to apply to all resources')
 param tags object = {
   project: 'index'
@@ -42,6 +45,7 @@ module resources 'resources.bicep' = {
     tags: tags
     apiKey: apiKey
     apiEndpoint: apiEndpoint
+    viteApiBaseUrl: viteApiBaseUrl
   }
 }
 

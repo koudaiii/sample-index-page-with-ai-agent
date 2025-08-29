@@ -18,4 +18,11 @@ if ! type "npm" > /dev/null; then
   exit 1
 fi
 
+## check .env file
+if [ ! -f .env ]; then
+  echo ".env file is missing"
+  cp .env.example .env
+  echo "Copied .env.example to .env. Please edit .env file."
+fi
+
 npm ci

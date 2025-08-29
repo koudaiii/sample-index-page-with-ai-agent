@@ -1,31 +1,24 @@
 version: '3.8'
 
 services:
-  # Frontend (Nginx + Built React)
+  # Frontend (Nginx)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: production
+    environment:
+        - VITE_API_BASE_URL=http://localhost:8000
     ports:
       - "80:80"
-    depends_on:
-      - backend
-    environment:
-      - NODE_ENV=production
 
   # Backend (FastAPI)
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: production
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend/data:/app/data:ro
     environment:
-      - DEBUG=false
       - PORT=8000
-      - AZURE_AI_FOUNDRY_ENDPOINT=${AZURE_AI_FOUNDRY_ENDPOINT:-""}
-      - AZURE_AI_FOUNDRY_API_KEY=${AZURE_AI_FOUNDRY_API_KEY:-""}
+      - API_ENDPOINT=${API_ENDPOINT:-""}
+      - API_KEY=${API_KEY:-""}

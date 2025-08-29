@@ -2,7 +2,6 @@ import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ChevronLeft, ChevronRight } from "@phosphor-icons/react"
 import { API_ENDPOINTS } from "@/lib/config"
 
 interface BannerItem {
@@ -115,7 +114,7 @@ export function Banner() {
           className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 backdrop-blur border-white/20 text-white hover:bg-white/20"
           onClick={goToPrevious}
         >
-          <ChevronLeft className="h-4 w-4" />
+          <span className="text-lg font-bold">‹</span>
         </Button>
 
         <Button
@@ -124,7 +123,7 @@ export function Banner() {
           className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 backdrop-blur border-white/20 text-white hover:bg-white/20"
           onClick={goToNext}
         >
-          <ChevronRight className="h-4 w-4" />
+          <span className="text-lg font-bold">›</span>
         </Button>
 
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">

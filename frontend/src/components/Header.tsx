@@ -1,4 +1,3 @@
-import { Search, ShoppingCart, Heart, Menu } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -36,7 +35,7 @@ export function Header() {
         <div className="flex items-center gap-4">
           {!isMobile && (
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">🔍</span>
               <Input
                 placeholder="商品を検索..."
                 className="w-64 pl-10"
@@ -47,14 +46,14 @@ export function Header() {
           
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon">
-              <Heart className="h-5 w-5" />
+              <span className="text-lg">♡</span>
             </Button>
             <Button variant="ghost" size="icon">
-              <ShoppingCart className="h-5 w-5" />
+              <span className="text-lg">🛒</span>
             </Button>
             {isMobile && (
               <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
+                <span className="text-lg">☰</span>
               </Button>
             )}
           </div>

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Star, Heart, ShoppingCart } from "@phosphor-icons/react"
 import { API_ENDPOINTS } from "@/lib/config"
 
 interface ContentItem {
@@ -125,7 +124,7 @@ export function ContentList({ title, items }: ContentListProps) {
                 size="icon"
                 className="absolute top-3 right-3 bg-white/10 backdrop-blur hover:bg-white/20 text-white opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                <Heart className="h-4 w-4" />
+                <span className="text-base">♡</span>
               </Button>
             </div>
 
@@ -136,7 +135,7 @@ export function ContentList({ title, items }: ContentListProps) {
               </div>
 
               <div className="flex items-center gap-1">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                <span className="text-yellow-400 text-sm">★</span>
                 <span className="text-sm font-medium">{item.rating}</span>
               </div>
 
@@ -153,7 +152,7 @@ export function ContentList({ title, items }: ContentListProps) {
                 </div>
 
                 <Button size="icon" variant="outline" className="shrink-0">
-                  <ShoppingCart className="h-4 w-4" />
+                  <span className="text-base">🛒</span>
                 </Button>
               </div>
             </CardContent>

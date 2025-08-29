@@ -37,8 +37,8 @@ RUN addgroup -g 1001 -S nginx-group && \
 # Switch to non-root user
 USER nginx-user
 
-# Expose port 80
-EXPOSE 80
+# Expose port 8080
+EXPOSE 8080
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]

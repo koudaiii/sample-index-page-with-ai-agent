@@ -7,6 +7,10 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 # Set working directory
 WORKDIR /app
 
+# Create uv cache directory
+RUN mkdir -p /app/.cache/uv && chmod 777 /app/.cache/uv
+ENV UV_CACHE_DIR=/app/.cache/uv
+
 # Copy dependency files first for better caching
 COPY pyproject.toml uv.lock* ./
 
@@ -34,6 +38,10 @@ WORKDIR /app
 # Create non-root user
 RUN addgroup --gid 1001 --system app && \
     adduser --uid 1001 --system --group app
+
+# Create uv cache directory for the app user
+RUN mkdir -p /app/.cache/uv && chown -R app:app /app/.cache/uv
+ENV UV_CACHE_DIR=/app/.cache/uv
 
 # Copy dependency files first for better caching
 COPY pyproject.toml uv.lock* ./

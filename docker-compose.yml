@@ -4,7 +4,7 @@ services:
   # Frontend (Nginx + Built React)
   frontend:
     build:
-      context: .
+      context: ./frontend
       dockerfile: Dockerfile
       target: production
     ports:
@@ -27,5 +27,5 @@ services:
     environment:
       - DEBUG=false
       - PORT=8000
-      - AZURE_AI_FOUNDRY_ENDPOINT=${AZURE_AI_FOUNDRY_ENDPOINT}
-      - AZURE_AI_FOUNDRY_API_KEY=${AZURE_AI_FOUNDRY_API_KEY}
+      - AZURE_AI_FOUNDRY_ENDPOINT=${AZURE_AI_FOUNDRY_ENDPOINT:-""}
+      - AZURE_AI_FOUNDRY_API_KEY=${AZURE_AI_FOUNDRY_API_KEY:-""}

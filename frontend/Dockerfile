@@ -1,36 +1,17 @@
-# Development stage
-FROM node:24-alpine AS development
-
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm ci
-
-# Copy source code
-COPY . .
-
-# Expose port for development
-EXPOSE 5173
-
-# Start development server
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
-
-# Build stage
 FROM node:24-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy only package files first to leverage cache
+COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm ci --only=production=false
+# Install dependencies (dev deps needed for build)
+RUN npm ci
 
-# Copy source code
-COPY . .
+# Copy only necessary app sources
+COPY index.html ./
+COPY vite.config.ts tsconfig.json tailwind.config.js components.json ./
+COPY src ./src
 
 # Build the application
 RUN npm run build

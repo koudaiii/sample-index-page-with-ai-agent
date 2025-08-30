@@ -20,7 +20,8 @@ permissions:
 env:
   AZURE_CORE_OUTPUT: json
   DOCKER_REGISTRY: koudaiii
-  DOCKER_IMAGE_NAME: indexfrontend
+  FRONTEND_DOCKER_IMAGE_NAME: indexfrontend
+  BACKEND_DOCKER_IMAGE_NAME: indexbackend
   API_KEY: ${{ secrets.API_KEY }}
   API_ENDPOINT: ${{ secrets.API_ENDPOINT }}
 
@@ -63,9 +64,11 @@ jobs:
           exit 1
         fi
         if [ "${{ github.event.inputs.docker_image_tag }}" = "latest" ]; then
-          echo "image=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME}}:latest" >> $GITHUB_OUTPUT
+          echo "frontend_image=${{ env.DOCKER_REGISTRY }}/${{ env.FRONTEND_DOCKER_IMAGE_NAME}}:latest" >> $GITHUB_OUTPUT
+          echo "backend_image=${{ env.DOCKER_REGISTRY }}/${{ env.BACKEND_DOCKER_IMAGE_NAME}}:latest" >> $GITHUB_OUTPUT
         else
-          echo "image=${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME}}:${{ github.event.inputs.docker_image_tag }}" >> $GITHUB_OUTPUT
+          echo "frontend_image=${{ env.DOCKER_REGISTRY }}/${{ env.FRONTEND_DOCKER_IMAGE_NAME}}:${{ github.event.inputs.docker_image_tag }}" >> $GITHUB_OUTPUT
+          echo "backend_image=${{ env.DOCKER_REGISTRY }}/${{ env.BACKEND_DOCKER_IMAGE_NAME}}:${{ github.event.inputs.docker_image_tag }}" >> $GITHUB_OUTPUT
         fi
 
     - name: Validate Bicep template
@@ -75,8 +78,9 @@ jobs:
           --template-file infra/main.bicep \
           --parameters infra/main.bicepparam \
           --parameters suffixName="${{ steps.suffix.outputs.name }}" \
-          --parameters dockerImage="${{ steps.docker.outputs.image }}"
-    
+          --parameters frontendDockerImage="${{ steps.docker.outputs.frontend_image }}" \
+          --parameters backendDockerImage="${{ steps.docker.outputs.backend_image }}"
+
     - name: Deploy Bicep template
       id: deploy
       run: |
@@ -86,9 +90,10 @@ jobs:
           --template-file infra/main.bicep \
           --parameters infra/main.bicepparam \
           --parameters suffixName="${{ steps.suffix.outputs.name }}" \
-          --parameters dockerImage="${{ steps.docker.outputs.image }}" \
+          --parameters frontendDockerImage="${{ steps.docker.outputs.frontend_image }}" \
+          --parameters backendDockerImage="${{ steps.docker.outputs.backend_image }}" \
           --parameters tags='{"project":"index","managed_by":"bicep","environment":"${{ steps.suffix.outputs.name }}","created_at":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","created_by":"github-actions"}' \
-          --query 'properties.outputs.appServiceUrl.value' \
+          --query 'properties.outputs.frontendAppServiceUrl.value' \
           --output tsv)
         echo "url=$DEPLOYMENT_OUTPUT" >> $GITHUB_OUTPUT
 
@@ -99,7 +104,7 @@ jobs:
         ATTEMPT=1
 
         while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-          if curl -f -s --max-time 10 "${{ steps.deploy.outputs.url }}" > /dev/null; then
+          if curl -f -s --max-time 10 "${{ steps.deploy.outputs.frontendAppServiceUrl }}" > /dev/null; then
             echo "✅ Application is responding"
             break
           fi
@@ -118,18 +123,22 @@ jobs:
       run: |
         echo "Deployment failed. Resource group: rg-index-${{ steps.suffix.outputs.name }}"
         echo "Resource group: rg-index-${{ steps.suffix.outputs.name }}"
-        echo "Docker image: ${{ steps.docker.outputs.image }}"
+        echo "Frontend Docker image: ${{ steps.docker.outputs.frontend_image }}"
+        echo "Backend Docker image: ${{ steps.docker.outputs.backend_image }}"
         echo "Consider running cleanup workflow if needed."
 
     - name: Output deployment info
       run: |
         echo "## 🚀 Environment Deployed"
         echo ""
-        echo "**App URL:** ${{ steps.deploy.outputs.url }}"
-        echo "**Docker Image:** ${{ steps.docker.outputs.image }}"
+        echo "**App URL:** ${{ steps.deploy.outputs.frontendAppServiceUrl }}"
+        echo "**Frontend Docker Image:** ${{ steps.docker.outputs.frontend_image }}"
+        echo "**Backend Docker Image:** ${{ steps.docker.outputs.backend_image }}"
 
     - name: Add to job summary
       run: |
         echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
-        echo "- **App URL**: ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Frontend URL**: ${{ steps.deploy.outputs.frontendAppServiceUrl }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Resource Group**: rg-index-${{ steps.suffix.outputs.name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Frontend Docker Image**: ${{ steps.docker.outputs.frontend_image }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Backend Docker Image**: ${{ steps.docker.outputs.backend_image }}" >> $GITHUB_STEP_SUMMARY

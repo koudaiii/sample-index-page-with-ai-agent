@@ -95,7 +95,7 @@ jobs:
           --parameters tags='{"project":"index","managed_by":"bicep","environment":"${{ steps.suffix.outputs.name }}","created_at":"$(date -u +%Y-%m-%dT%H:%M:%SZ)","created_by":"github-actions"}' \
           --query 'properties.outputs.frontendAppServiceUrl.value' \
           --output tsv)
-        echo "url=$DEPLOYMENT_OUTPUT" >> $GITHUB_OUTPUT
+        echo "frontendAppServiceUrl=$DEPLOYMENT_OUTPUT" >> $GITHUB_OUTPUT
 
     - name: Verify deployment
       run: |

@@ -5,8 +5,26 @@ import json
 import os
 from pathlib import Path
 from typing import List, Optional
+from dotenv import load_dotenv
 
 from models import BannerItem, ContentItem
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Check if Azure agent should be enabled via environment variable
+AZURE_AGENT_AVAILABLE = os.getenv("AZURE_AGENT_AVAILABLE", "false").lower() == "true"
+
+# Optional import for Azure agent - make it graceful
+if AZURE_AGENT_AVAILABLE:
+    try:
+        from azure_agent_sample import get_recommendation
+        print("Azure agent enabled and imported successfully")
+    except ImportError as e:
+        AZURE_AGENT_AVAILABLE = False
+        print(f"Azure agent import failed: {e} - running without AI recommendations")
+else:
+    print("Azure agent disabled via environment variable")
 
 # Load data on startup
 banners_data: List[BannerItem] = []
@@ -56,7 +74,29 @@ async def root():
 
 @app.get("/api/banners", response_model=List[BannerItem])
 async def get_banners():
-    """Get all banner items"""
+    """Get all banner items with Azure AI recommendation"""
+    # Only try to get AI recommendation if Azure agent is available
+    if AZURE_AGENT_AVAILABLE:
+        try:
+            # Get recommendation from Azure AI agent
+            recommendation = get_recommendation()
+            
+            # If we get a recommendation, create a banner from it
+            if recommendation:
+                rec_banner = BannerItem(
+                    id=f"rec_{recommendation.get('id', 'ai_recommendation')}",
+                    title=recommendation.get('title', 'AI おすすめ商品'),
+                    subtitle=f"価格: ¥{recommendation.get('price', 0)} | 評価: {recommendation.get('rating', 0)}",
+                    imageUrl=recommendation.get('imageUrl', '/placeholder-image.jpg'),
+                    tag="AI推薦",
+                    color="oklch(0.7 0.15 40)"  # Coral orange from design system
+                )
+                # Insert recommendation banner at the beginning
+                return [rec_banner] + banners_data
+        except Exception as e:
+            # Log error but continue with regular banners
+            print(f"Failed to get AI recommendation: {e}")
+    
     return banners_data
 
 @app.get("/api/content", response_model=List[ContentItem])

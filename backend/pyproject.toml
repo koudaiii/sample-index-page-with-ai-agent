@@ -16,6 +16,7 @@ dependencies = [
     "httpx==0.28.1",
     "azure-ai-ml==1.23.0",
     "azure-identity==1.19.0",
+    "azure-ai-projects==1.0.0b10",
 ]
 
 [project.optional-dependencies]

@@ -1,0 +1,346 @@
+#!/bin/bash
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Utility functions
+print_info() {
+    if [ "$QUIET_MODE" != "true" ]; then
+        printf "\033[0;32m[INFO]\033[0m %s\n" "$1"
+    fi
+}
+
+print_warning() {
+    printf "\033[1;33m[WARNING]\033[0m %s\n" "$1"
+}
+
+print_error() {
+    printf "\033[0;31m[ERROR]\033[0m %s\n" "$1"
+}
+
+print_command() {
+    if [ "$QUIET_MODE" != "true" ]; then
+        printf "\033[1;33m[COMMAND]\033[0m %s\n" "$1"
+    fi
+}
+
+# Display help message
+show_help() {
+    cat << EOF
+Usage: $0 [OPTIONS]
+
+This script creates an Azure AD application for Azure AI Projects authentication.
+
+OPTIONS:
+    -h, --help                          Show this help message and exit
+    -d, --display-name <name>           Display name for the Azure AD application
+                                       (default: \$USER-ai-projects-timestamp)
+    -p, --project-name <name>           Azure AI Projects name (required)
+    -g, --resource-group <name>         Azure resource group name (required)
+    -q, --quiet                         Suppress info messages (errors and warnings still shown)
+
+DESCRIPTION:
+    This script performs the following operations:
+    1. Logs into Azure CLI
+    2. Creates an Azure AD application  
+    3. Creates a client secret
+    4. Assigns Azure AI Developer role to the service principal
+    5. Updates the backend .env file with credentials
+
+EXAMPLES:
+    $0 -p ai-standard-project-nyvp -g your-resource-group
+    $0 --project-name my-ai-project --resource-group my-rg --display-name my-app
+
+REQUIREMENTS:
+    - Azure CLI must be installed and available in PATH
+    - jq must be installed for JSON processing
+    - Appropriate Azure permissions to create AD applications
+    - Azure AI Projects resource must exist
+
+OUTPUT:
+    Updates backend/.env with:
+    - AZURE_CLIENT_ID
+    - AZURE_CLIENT_SECRET  
+    - AZURE_TENANT_ID
+
+EOF
+}
+
+# Initialize and validate parameters
+initialize_parameters() {
+    local suffix=$(date +%Y%m%d%H%M%S)
+    
+    # Initialize variables with default values
+    DISPLAY_NAME="$USER-ai-projects-$suffix"
+    PROJECT_NAME=""
+    RESOURCE_GROUP=""
+    QUIET_MODE=false
+
+    # Parse all options
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -d|--display-name)
+                DISPLAY_NAME="$2"
+                shift 2
+                ;;
+            -p|--project-name)
+                PROJECT_NAME="$2"
+                shift 2
+                ;;
+            -g|--resource-group)
+                RESOURCE_GROUP="$2"
+                shift 2
+                ;;
+            -q|--quiet)
+                QUIET_MODE=true
+                shift
+                ;;
+            -h|--help)
+                show_help
+                exit 0
+                ;;
+            -*)
+                print_error "Unknown option: $1"
+                show_help
+                exit 1
+                ;;
+            *)
+                print_error "Unexpected argument: $1"
+                print_error "All parameters must be specified as options. Use --help for usage information."
+                exit 1
+                ;;
+        esac
+    done
+
+    # Validate required parameters
+    if [ -z "$PROJECT_NAME" ] || [ -z "$RESOURCE_GROUP" ]; then
+        print_error "Project name and resource group are required."
+        print_error "Use --project-name and --resource-group options."
+        show_help
+        exit 1
+    fi
+
+    print_info "Parameters initialized:"
+    print_info "  Display Name: $DISPLAY_NAME"
+    print_info "  Project Name: $PROJECT_NAME"
+    print_info "  Resource Group: $RESOURCE_GROUP"
+}
+
+# Azure login
+azure_login() {
+    print_info "Logging into Azure..."
+    print_command "az login"
+    az login
+    if [ $? -ne 0 ]; then
+        print_error "Failed to login to Azure."
+        exit 1
+    fi
+    print_info "Azure login successful."
+}
+
+# Create Azure AD application
+create_azure_ad_app() {
+    print_info "Creating Azure AD application '$DISPLAY_NAME'..."
+    print_command "az ad app create --display-name \"$DISPLAY_NAME\""
+    
+    APP_CREATION_OUTPUT=$(az ad app create --display-name "$DISPLAY_NAME")
+    if [ $? -ne 0 ]; then
+        print_error "Failed to create Azure AD application."
+        exit 1
+    fi
+
+    # Extract and set APPLICATION_ID immediately
+    APPLICATION_ID=$(echo "$APP_CREATION_OUTPUT" | jq -r '.appId')
+    if [ -z "$APPLICATION_ID" ] || [ "$APPLICATION_ID" = "null" ]; then
+        print_error "Failed to retrieve application ID from created application."
+        exit 1
+    fi
+
+    print_info "Azure AD application '$DISPLAY_NAME' created successfully."
+    print_info "Application ID: $APPLICATION_ID"
+}
+
+# Create client secret
+create_client_secret() {
+    print_info "Creating client secret..."
+    
+    # Validate APPLICATION_ID is available
+    validate_application_id
+    
+    print_command "az ad app credential reset --id \"$APPLICATION_ID\" --display-name \"ai-projects-secret\""
+    SECRET_OUTPUT=$(az ad app credential reset --id "$APPLICATION_ID" --display-name "ai-projects-secret")
+    if [ $? -ne 0 ]; then
+        print_error "Failed to create client secret."
+        exit 1
+    fi
+
+    CLIENT_SECRET=$(echo "$SECRET_OUTPUT" | jq -r '.password')
+    if [ -z "$CLIENT_SECRET" ] || [ "$CLIENT_SECRET" = "null" ]; then
+        print_error "Failed to retrieve client secret."
+        exit 1
+    fi
+
+    print_info "Client secret created successfully."
+}
+
+# Create service principal
+create_service_principal() {
+    print_info "Creating service principal..."
+
+    # Validate APPLICATION_ID is available
+    validate_application_id
+
+    print_command "az ad sp create --id \"$APPLICATION_ID\""
+    az ad sp create --id "$APPLICATION_ID"
+    if [ $? -ne 0 ]; then
+        print_error "Failed to create service principal for the application."
+        exit 1
+    fi
+
+    print_info "Service principal created successfully."
+}
+
+# Assign Azure AI Developer role to service principal
+assign_ai_developer_role() {
+    print_info "Assigning Azure AI Developer role to service principal..."
+
+    # Validate APPLICATION_ID is available
+    validate_application_id
+
+    local subscription_id=$(az account show --query id -o tsv)
+    local scope="/subscriptions/$subscription_id/resourceGroups/$RESOURCE_GROUP"
+
+    print_command "az role assignment create --assignee \"$APPLICATION_ID\" --role \"Azure AI Developer\" --scope \"$scope\""
+    az role assignment create \
+        --assignee "$APPLICATION_ID" \
+        --role "Azure AI Developer" \
+        --scope "$scope"
+
+    if [ $? -ne 0 ]; then
+        print_error "Failed to assign Azure AI Developer role to the service principal."
+        exit 1
+    fi
+
+    print_info "Azure AI Developer role assigned successfully."
+}
+
+# Validate APPLICATION_ID is set and valid
+validate_application_id() {
+    if [ -z "$APPLICATION_ID" ] || [ "$APPLICATION_ID" = "null" ]; then
+        print_error "APPLICATION_ID is not set. Cannot proceed."
+        exit 1
+    fi
+}
+
+# Update backend .env file
+update_env_file() {
+    print_info "Updating backend/.env file..."
+    
+    local tenant_id=$(az account show --query tenantId -o tsv)
+    local backend_env_file="./backend/.env"
+    
+    # Check if backend directory and .env file exist
+    if [ ! -d "./backend" ]; then
+        print_error "Backend directory not found. Please run this script from the project root."
+        exit 1
+    fi
+    
+    if [ ! -f "$backend_env_file" ]; then
+        print_warning ".env file not found. Creating new one."
+        touch "$backend_env_file"
+    fi
+    
+    # Create backup
+    cp "$backend_env_file" "${backend_env_file}.backup"
+    print_info "Created backup: ${backend_env_file}.backup"
+    
+    # Remove existing Azure credentials if present
+    sed -i '' '/^AZURE_CLIENT_ID=/d' "$backend_env_file" 2>/dev/null || sed -i '/^AZURE_CLIENT_ID=/d' "$backend_env_file"
+    sed -i '' '/^AZURE_CLIENT_SECRET=/d' "$backend_env_file" 2>/dev/null || sed -i '/^AZURE_CLIENT_SECRET=/d' "$backend_env_file"
+    sed -i '' '/^AZURE_TENANT_ID=/d' "$backend_env_file" 2>/dev/null || sed -i '/^AZURE_TENANT_ID=/d' "$backend_env_file"
+    
+    # Add new Azure credentials
+    cat >> "$backend_env_file" << EOF
+
+# Azure AD Application Credentials for AI Projects (generated by script/setup)
+AZURE_CLIENT_ID=$APPLICATION_ID
+AZURE_CLIENT_SECRET=$CLIENT_SECRET
+AZURE_TENANT_ID=$tenant_id
+EOF
+
+    print_info "Backend .env file updated successfully."
+    print_info "Credentials added:"
+    print_info "  AZURE_CLIENT_ID: $APPLICATION_ID"
+    print_info "  AZURE_TENANT_ID: $tenant_id"
+    print_info "  AZURE_CLIENT_SECRET: [hidden]"
+}
+
+# Display final summary
+display_summary() {
+    local tenant_id=$(az account show --query tenantId -o tsv)
+    
+    print_info "Azure AD application setup completed successfully."
+    print_info ""
+    print_info "Application Details:"
+    print_info "-------------------------------------------------------------"
+    print_info "Display Name: $DISPLAY_NAME"
+    print_info "Application ID: $APPLICATION_ID"
+    print_info "Tenant ID: $tenant_id"
+    print_info "Project: $PROJECT_NAME"
+    print_info "Resource Group: $RESOURCE_GROUP"
+    print_info "-------------------------------------------------------------"
+    print_info ""
+    print_info "The backend/.env file has been updated with Azure credentials."
+    print_info "You can now run your application with Azure AI Projects integration."
+}
+
+# Confirmation prompt
+confirm_deployment() {
+    while true; do
+        print_info "The following Azure AD application will be created:"
+        print_info "  Display Name: $DISPLAY_NAME"
+        print_info "  Project Name: $PROJECT_NAME"
+        print_info "  Resource Group: $RESOURCE_GROUP"
+        print_info ""
+        
+        printf "Do you want to proceed? (y/N): "
+        read -r response
+        case "$response" in
+            [yY]|[yY][eE][sS])
+                print_info "Proceeding with setup..."
+                return 0
+                ;;
+            *)
+                print_info "Setup cancelled."
+                exit 0
+                ;;
+        esac
+    done
+}
+
+# Main execution flow
+main() {
+    print_info "Azure AI Projects Authentication Setup"
+    print_info "======================================"
+    
+    initialize_parameters "$@"
+    confirm_deployment
+    azure_login
+    create_azure_ad_app
+    create_client_secret
+    create_service_principal
+    assign_ai_developer_role
+    update_env_file
+    display_summary
+    
+    print_info ""
+    print_info "Setup complete! You can now use Azure AI Projects authentication."
+}
+
+# Execute main function with all arguments
+main "$@"

@@ -69,6 +69,20 @@ wheels = [
 ]
 
 [[package]]
+name = "azure-ai-projects"
+version = "1.0.0b10"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "azure-core" },
+    { name = "isodate" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/26/2e/e6ab1f7c1b12fcef9549a797a575e3dd5a71297ce12b083a983311cd5069/azure_ai_projects-1.0.0b10.tar.gz", hash = "sha256:cdc8055305cec762f09f7581796ea97599d2a2fb26f2c8486f34f728d5bdc98a", size = 323251, upload-time = "2025-04-23T21:56:56.832Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/96/7c/e45b98dc298a706ac639064aec316730a534d0d49d27986d00ba4e23dced/azure_ai_projects-1.0.0b10-py3-none-any.whl", hash = "sha256:77cd7fdac5affc37c437e60f1e244a706c1151b1bf682c5a471b3d233978b647", size = 200755, upload-time = "2025-04-23T21:56:58.032Z" },
+]
+
+[[package]]
 name = "azure-common"
 version = "1.1.28"
 source = { registry = "https://pypi.org/simple" }
@@ -284,6 +298,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "azure-ai-ml" },
+    { name = "azure-ai-projects" },
     { name = "azure-identity" },
     { name = "fastapi" },
     { name = "httpx" },
@@ -310,6 +325,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "azure-ai-ml", specifier = "==1.23.0" },
+    { name = "azure-ai-projects", specifier = "==1.0.0b10" },
     { name = "azure-identity", specifier = "==1.19.0" },
     { name = "fastapi", specifier = "==0.115.6" },
     { name = "httpx", specifier = "==0.28.1" },

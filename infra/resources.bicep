@@ -83,7 +83,7 @@ module frontendAppService 'br/public:avm/res/web/site:0.11.0' = {
         }
         {
           name: 'WEBSITES_PORT'
-          value: '80'
+          value: '5173'
         }
         {
           name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'

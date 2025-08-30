@@ -20,7 +20,7 @@ fi
 
 ## display web urls
 echo "Docker Compose Environment:"
-echo "Frontend: http://localhost:80"
+echo "Frontend: http://localhost"
 echo "Backend API: http://localhost:8000"
 echo "API Documentation: http://localhost:8000/docs"
 

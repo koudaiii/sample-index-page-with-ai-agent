@@ -6,9 +6,11 @@ param suffixName string
 @description('Azure region for resources')
 param location string = 'Australia East'
 
-@description('Docker image for the app service')
-param dockerImage string = 'koudaiii/indexfrontend:latest'
+@description('Docker image for the frontend app service')
+param frontendDockerImage string = 'koudaiii/indexfrontend:latest'
 
+@description('Docker image for the backend app service')
+param backendDockerImage string = 'koudaiii/indexbackend:latest'
 
 @secure()
 @description('api key for the app service')
@@ -17,9 +19,6 @@ param apiKey string
 @secure()
 @description('api endpoint for the app service')
 param apiEndpoint string
-
-@description('Vite API base URL for the frontend')
-param viteApiBaseUrl string = 'http://localhost:8000'
 
 @description('Tags to apply to all resources')
 param tags object = {
@@ -41,14 +40,17 @@ module resources 'resources.bicep' = {
   params: {
     suffixName: suffixName
     location: location
-    dockerImage: dockerImage
+    frontendDockerImage: frontendDockerImage
+    backendDockerImage: backendDockerImage
     tags: tags
     apiKey: apiKey
     apiEndpoint: apiEndpoint
-    viteApiBaseUrl: viteApiBaseUrl
   }
 }
 
 // Outputs
-output appServiceUrl string = resources.outputs.appServiceUrl
+output frontendAppServiceUrl string = resources.outputs.frontendAppServiceUrl
+output frontendAppServiceName string = resources.outputs.frontendAppServiceName
+output backendAppServiceUrl string = resources.outputs.backendAppServiceUrl
+output backendAppServiceName string = resources.outputs.backendAppServiceName
 output resourceGroupName string = rg.name

@@ -42,6 +42,7 @@ OPTIONS:
                                        (default: \$USER-ai-projects-timestamp)
     -p, --project-name <name>           Azure AI Projects name (required)
     -g, --resource-group <name>         Azure resource group name (required)
+    -a, --ai-account-name <name>        Cognitive Services account name to grant access (optional)
     -q, --quiet                         Suppress info messages (errors and warnings still shown)
 
 DESCRIPTION:
@@ -49,8 +50,9 @@ DESCRIPTION:
     1. Logs into Azure CLI
     2. Creates an Azure AD application  
     3. Creates a client secret
-    4. Assigns Azure AI Developer role to the service principal
-    5. Updates the backend .env file with credentials
+    4. Assigns Azure AI Developer role to the service principal (resource group scope)
+    5. Assigns Cognitive Services User role to the service principal (Cognitive Services account scope)
+    6. Updates the backend .env file with credentials
 
 EXAMPLES:
     $0 -p ai-standard-project-nyvp -g your-resource-group
@@ -79,6 +81,7 @@ initialize_parameters() {
     DISPLAY_NAME="$USER-ai-projects-$suffix"
     PROJECT_NAME=""
     RESOURCE_GROUP=""
+    AI_ACCOUNT_NAME=""
     QUIET_MODE=false
 
     # Parse all options
@@ -94,6 +97,10 @@ initialize_parameters() {
                 ;;
             -g|--resource-group)
                 RESOURCE_GROUP="$2"
+                shift 2
+                ;;
+            -a|--ai-account-name)
+                AI_ACCOUNT_NAME="$2"
                 shift 2
                 ;;
             -q|--quiet)
@@ -129,6 +136,9 @@ initialize_parameters() {
     print_info "  Display Name: $DISPLAY_NAME"
     print_info "  Project Name: $PROJECT_NAME"
     print_info "  Resource Group: $RESOURCE_GROUP"
+    if [ -n "$AI_ACCOUNT_NAME" ]; then
+        print_info "  Cognitive Services Account: $AI_ACCOUNT_NAME"
+    fi
 }
 
 # Azure login
@@ -229,6 +239,95 @@ assign_ai_developer_role() {
     print_info "Azure AI Developer role assigned successfully."
 }
 
+# Retrieve service principal objectId for precise role assignments
+get_sp_object_id() {
+    validate_application_id
+    print_info "Retrieving service principal objectId..."
+    OBJECT_ID=$(az ad sp show --id "$APPLICATION_ID" --query id -o tsv 2>/dev/null || true)
+    if [ -z "$OBJECT_ID" ] || [ "$OBJECT_ID" = "null" ]; then
+        print_error "Failed to retrieve service principal objectId."
+        exit 1
+    fi
+    print_info "Service principal objectId: $OBJECT_ID"
+}
+
+# Resolve Cognitive Services account resource ID (auto-discover if not provided)
+resolve_cognitive_account() {
+    print_info "Resolving Cognitive Services account..."
+    local resource_id=""
+
+    if [ -n "$AI_ACCOUNT_NAME" ]; then
+        print_command "az resource show -g \"$RESOURCE_GROUP\" -n \"$AI_ACCOUNT_NAME\" --resource-type Microsoft.CognitiveServices/accounts --query id -o tsv"
+        resource_id=$(az resource show -g "$RESOURCE_GROUP" -n "$AI_ACCOUNT_NAME" --resource-type Microsoft.CognitiveServices/accounts --query id -o tsv 2>/dev/null || true)
+        if [ -z "$resource_id" ]; then
+            print_error "Could not find Cognitive Services account '$AI_ACCOUNT_NAME' in resource group '$RESOURCE_GROUP'."
+            exit 1
+        fi
+        COG_ACCOUNT_ID="$resource_id"
+        return 0
+    fi
+
+    # Auto-discover accounts in the resource group
+    print_command "az resource list -g \"$RESOURCE_GROUP\" --resource-type Microsoft.CognitiveServices/accounts --query '[].{name:name,id:id}' -o tsv"
+    local accounts_output
+    accounts_output=$(az resource list -g "$RESOURCE_GROUP" --resource-type Microsoft.CognitiveServices/accounts --query "[].{name:name,id:id}" -o tsv)
+
+    if [ -z "$accounts_output" ]; then
+        print_warning "No Cognitive Services accounts found in resource group '$RESOURCE_GROUP'. Skipping 'Cognitive Services User' role assignment."
+        COG_ACCOUNT_ID=""
+        return 0
+    fi
+
+    local count
+    count=$(printf "%s\n" "$accounts_output" | wc -l | tr -d ' ')
+
+    if [ "$count" -eq 1 ]; then
+        AI_ACCOUNT_NAME=$(printf "%s\n" "$accounts_output" | awk -F '\t' '{print $1}')
+        COG_ACCOUNT_ID=$(printf "%s\n" "$accounts_output" | awk -F '\t' '{print $2}')
+        print_info "Discovered Cognitive Services account: $AI_ACCOUNT_NAME"
+        return 0
+    fi
+
+    print_info "Multiple Cognitive Services accounts found. Please select one:"
+    printf "%s\n" "$accounts_output" | awk -F '\t' '{printf(" - %s\n", $1)}'
+    printf "Enter account name to use: "
+    read -r AI_ACCOUNT_NAME
+    if [ -z "$AI_ACCOUNT_NAME" ]; then
+        print_error "No account name entered. Aborting."
+        exit 1
+    fi
+    COG_ACCOUNT_ID=$(az resource show -g "$RESOURCE_GROUP" -n "$AI_ACCOUNT_NAME" --resource-type Microsoft.CognitiveServices/accounts --query id -o tsv 2>/dev/null || true)
+    if [ -z "$COG_ACCOUNT_ID" ]; then
+        print_error "Failed to resolve resource ID for account '$AI_ACCOUNT_NAME'."
+        exit 1
+    fi
+}
+
+# Assign 'Cognitive Services User' role at the Cognitive Services account scope
+assign_cognitive_services_user_role() {
+    resolve_cognitive_account
+    if [ -z "$COG_ACCOUNT_ID" ]; then
+        return 0
+    fi
+
+    get_sp_object_id
+
+    print_info "Assigning 'Cognitive Services User' role at scope: $COG_ACCOUNT_ID"
+    print_command "az role assignment create --assignee-object-id \"$OBJECT_ID\" --assignee-principal-type ServicePrincipal --role 'Cognitive Services User' --scope \"$COG_ACCOUNT_ID\""
+    az role assignment create \
+        --assignee-object-id "$OBJECT_ID" \
+        --assignee-principal-type ServicePrincipal \
+        --role "Cognitive Services User" \
+        --scope "$COG_ACCOUNT_ID"
+
+    if [ $? -ne 0 ]; then
+        print_error "Failed to assign 'Cognitive Services User' role."
+        exit 1
+    fi
+
+    print_info "'Cognitive Services User' role assigned successfully to $AI_ACCOUNT_NAME."
+}
+
 # Validate APPLICATION_ID is set and valid
 validate_application_id() {
     if [ -z "$APPLICATION_ID" ] || [ "$APPLICATION_ID" = "null" ]; then
@@ -293,6 +392,9 @@ display_summary() {
     print_info "Tenant ID: $tenant_id"
     print_info "Project: $PROJECT_NAME"
     print_info "Resource Group: $RESOURCE_GROUP"
+    if [ -n "$AI_ACCOUNT_NAME" ] && [ -n "$COG_ACCOUNT_ID" ]; then
+        print_info "Cognitive Services Account: $AI_ACCOUNT_NAME"
+    fi
     print_info "-------------------------------------------------------------"
     print_info ""
     print_info "The backend/.env file has been updated with Azure credentials."
@@ -335,6 +437,7 @@ main() {
     create_client_secret
     create_service_principal
     assign_ai_developer_role
+    assign_cognitive_services_user_role
     update_env_file
     display_summary
     

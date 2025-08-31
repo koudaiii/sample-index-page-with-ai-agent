@@ -6,6 +6,11 @@ import os
 from pathlib import Path
 from typing import List, Optional
 from dotenv import load_dotenv
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 from models import BannerItem, ContentItem
 
@@ -19,12 +24,12 @@ AZURE_AGENT_AVAILABLE = os.getenv("AZURE_AGENT_AVAILABLE", "false").lower() == "
 if AZURE_AGENT_AVAILABLE:
     try:
         from azure_agent_sample import get_recommendation
-        print("Azure agent enabled and imported successfully")
+        logger.info("Azure agent enabled and imported successfully")
     except ImportError as e:
         AZURE_AGENT_AVAILABLE = False
-        print(f"Azure agent import failed: {e} - running without AI recommendations")
+        logger.error(f"Azure agent import failed: {e} - running without AI recommendations")
 else:
-    print("Azure agent disabled via environment variable")
+    logger.info("Azure agent disabled via environment variable")
 
 # Load data on startup
 banners_data: List[BannerItem] = []
@@ -78,11 +83,13 @@ async def get_banners():
     # Only try to get AI recommendation if Azure agent is available
     if AZURE_AGENT_AVAILABLE:
         try:
+            logger.info("Attempting to get AI recommendation")
             # Get recommendation from Azure AI agent
             recommendation = get_recommendation()
             
             # If we get a recommendation, create a banner from it
             if recommendation:
+                logger.info(f"AI recommendation received: {recommendation}")
                 rec_banner = BannerItem(
                     id=f"rec_{recommendation.get('id', 'ai_recommendation')}",
                     title=recommendation.get('title', 'AI おすすめ商品'),
@@ -92,11 +99,17 @@ async def get_banners():
                     color="oklch(0.7 0.15 40)"  # Coral orange from design system
                 )
                 # Insert recommendation banner at the beginning
+                logger.info("Returning banners with AI recommendation")
                 return [rec_banner] + banners_data
+            else:
+                logger.warning("AI recommendation was None or empty")
         except Exception as e:
             # Log error but continue with regular banners
-            print(f"Failed to get AI recommendation: {e}")
+            logger.error(f"Failed to get AI recommendation: {e}")
+    else:
+        logger.info("Azure agent not available, returning regular banners only")
     
+    logger.info("Returning regular banners without AI recommendation")
     return banners_data
 
 @app.get("/api/content", response_model=List[ContentItem])

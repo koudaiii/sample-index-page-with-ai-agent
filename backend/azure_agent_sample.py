@@ -1,10 +1,14 @@
 import os
 import json
 import re
+import logging
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
 from azure.ai.agents.models import ListSortOrder
 from dotenv import load_dotenv
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -15,49 +19,76 @@ project = AIProjectClient(
     endpoint=os.getenv("PROJECT_ENDPOINT"))
 
 def main():
-    agent = project.agents.get_agent(os.getenv("AZURE_AI_AGENT_ID"))
+    try:
+        agent = project.agents.get_agent(os.getenv("AZURE_AI_AGENT_ID"))
+        logger.info(f"Got agent: {agent.id}")
 
-    thread = project.agents.threads.create()
-    print(f"Created thread, ID: {thread.id}")
+        thread = project.agents.threads.create()
+        logger.info(f"Created thread, ID: {thread.id}")
 
-    message = project.agents.messages.create(
-        thread_id=thread.id,
-        role="user",
-        content=f'''真夏になったので、今あるおすすめの水筒を値段等含めて教えてください。返答は、 content.json の在庫から一件の JSON で出力してください。
-            {{
-            "id": "",
-            "title": "",
-            "price": 0,
-            "rating": 0,
-            "imageUrl": "",
-            "category": "",
-            "isRecommended": false
-          }}'''
-    )
+        message = project.agents.messages.create(
+            thread_id=thread.id,
+            role="user",
+            content=f'''真夏になったので、今あるおすすめの水筒を値段等含めて教えてください。返答は、 content.json の在庫から一件の JSON で出力してください。
+                {{
+                "id": "",
+                "title": "",
+                "price": 0,
+                "rating": 0,
+                "imageUrl": "",
+                "category": "",
+                "isRecommended": false
+              }}'''
+        )
+        logger.info(f"Created message, ID: {message.id}")
 
-    run = project.agents.runs.create_and_process(
-        thread_id=thread.id,
-        agent_id=agent.id)
-
-    if run.status == "failed":
-        print(f"Run failed: {run.last_error}")
-        return None
-    else:
-        messages = project.agents.messages.list(thread_id=thread.id, order=ListSortOrder.ASCENDING)
-
-        for message in messages:
-            if message.role == "assistant" and message.text_messages:
-                text_content = message.text_messages[-1].text.value
-                # Extract JSON from the response text
-                json_match = re.search(r'\{[\s\S]*\}', text_content)
-                if json_match:
-                    try:
-                        json_str = json_match.group(0)
-                        return json.loads(json_str)
-                    except json.JSONDecodeError:
-                        return None
-                return None
+        logger.info("Starting run creation and processing...")
+        run = project.agents.runs.create_and_process(
+            thread_id=thread.id,
+            agent_id=agent.id)
         
+        logger.info(f"Run completed with status: {run.status}")
+        
+        if run.status == "failed":
+            logger.error(f"Run failed: {run.last_error}")
+            return None
+        elif run.status == "in_progress":
+            logger.warning(f"Run is still in progress (status: {run.status}). This might cause inconsistent results.")
+            return None
+        elif run.status == "completed":
+            logger.info("Run completed successfully, retrieving messages...")
+            messages = project.agents.messages.list(thread_id=thread.id, order=ListSortOrder.ASCENDING)
+            logger.info(f"Retrieved {len(list(messages))} messages")
+
+            messages = project.agents.messages.list(thread_id=thread.id, order=ListSortOrder.ASCENDING)
+            for message in messages:
+                logger.info(f"Processing message with role: {message.role}")
+                if message.role == "assistant" and message.text_messages:
+                    text_content = message.text_messages[-1].text.value
+                    logger.info(f"Assistant response: {text_content[:200]}...")
+                    # Extract JSON from the response text
+                    json_match = re.search(r'\{[\s\S]*\}', text_content)
+                    if json_match:
+                        try:
+                            json_str = json_match.group(0)
+                            result = json.loads(json_str)
+                            logger.info(f"Successfully parsed JSON recommendation: {result}")
+                            return result
+                        except json.JSONDecodeError as e:
+                            logger.error(f"Failed to parse JSON: {e}")
+                            return None
+                    else:
+                        logger.warning("No JSON found in assistant response")
+                        return None
+            
+            logger.warning("No assistant messages found")
+            return None
+        else:
+            logger.warning(f"Unexpected run status: {run.status}")
+            return None
+            
+    except Exception as e:
+        logger.error(f"Error in main function: {e}")
         return None
 
 def get_recommendation():

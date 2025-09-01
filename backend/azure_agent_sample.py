@@ -29,7 +29,7 @@ def main():
         message = project.agents.messages.create(
             thread_id=thread.id,
             role="user",
-            content=f'''真夏になったので、今あるおすすめの水筒を値段等含めて教えてください。返答は、 content.json の在庫から一件の JSON で出力してください。
+            content=f'''真夏になったので、今あるおすすめの水筒を値段等含めて教えてください。返答は、 content.json から次のようなフォーマットで一件 JSON 形式で出力してください。
                 {{
                 "id": "",
                 "title": "",

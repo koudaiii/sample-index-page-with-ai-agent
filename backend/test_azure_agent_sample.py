@@ -7,10 +7,13 @@ from azure_agent_sample import get_recommendation, main
 
 class TestAzureAgentSample(unittest.TestCase):
     
-    @patch('azure_agent_sample.project')
-    def test_successful_recommendation_parsing(self, mock_project):
+    @patch('azure_agent_sample.get_project_client')
+    def test_successful_recommendation_parsing(self, mock_get_project_client):
         """Test successful JSON parsing from assistant response"""
         # Mock the Azure AI project client response
+        mock_project = Mock()
+        mock_get_project_client.return_value = mock_project
+        
         mock_agent = Mock()
         mock_agent.id = "test-agent-id"
         mock_project.agents.get_agent.return_value = mock_agent
@@ -55,10 +58,13 @@ class TestAzureAgentSample(unittest.TestCase):
         self.assertEqual(result["rating"], 4.5)
         self.assertTrue(result["isRecommended"])
     
-    @patch('azure_agent_sample.project')
-    def test_no_json_found_fallback(self, mock_project):
+    @patch('azure_agent_sample.get_project_client')
+    def test_no_json_found_fallback(self, mock_get_project_client):
         """Test fallback response when no JSON is found in assistant response"""
         # Mock setup
+        mock_project = Mock()
+        mock_get_project_client.return_value = mock_project
+        
         mock_agent = Mock()
         mock_agent.id = "test-agent-id"
         mock_project.agents.get_agent.return_value = mock_agent
@@ -92,10 +98,13 @@ class TestAzureAgentSample(unittest.TestCase):
         self.assertEqual(result["price"], 0)
         self.assertTrue(result["isRecommended"])
     
-    @patch('azure_agent_sample.project')
-    def test_invalid_json_parsing_fallback(self, mock_project):
+    @patch('azure_agent_sample.get_project_client')
+    def test_invalid_json_parsing_fallback(self, mock_get_project_client):
         """Test fallback response when JSON parsing fails"""
         # Mock setup
+        mock_project = Mock()
+        mock_get_project_client.return_value = mock_project
+        
         mock_agent = Mock()
         mock_project.agents.get_agent.return_value = mock_agent
         
@@ -134,9 +143,12 @@ class TestAzureAgentSample(unittest.TestCase):
         self.assertEqual(result["price"], 0)
         self.assertTrue(result["isRecommended"])
     
-    @patch('azure_agent_sample.project')
-    def test_run_failed_fallback(self, mock_project):
+    @patch('azure_agent_sample.get_project_client')
+    def test_run_failed_fallback(self, mock_get_project_client):
         """Test fallback response when Azure AI run fails"""
+        mock_project = Mock()
+        mock_get_project_client.return_value = mock_project
+        
         mock_agent = Mock()
         mock_project.agents.get_agent.return_value = mock_agent
         
@@ -158,9 +170,12 @@ class TestAzureAgentSample(unittest.TestCase):
         self.assertEqual(result["title"], "おすすめ商品（実行失敗）")
         self.assertTrue(result["isRecommended"])
     
-    @patch('azure_agent_sample.project')
-    def test_run_in_progress_fallback(self, mock_project):
+    @patch('azure_agent_sample.get_project_client')
+    def test_run_in_progress_fallback(self, mock_get_project_client):
         """Test fallback response when Azure AI run is still in progress"""
+        mock_project = Mock()
+        mock_get_project_client.return_value = mock_project
+        
         mock_agent = Mock()
         mock_project.agents.get_agent.return_value = mock_agent
         
@@ -181,9 +196,12 @@ class TestAzureAgentSample(unittest.TestCase):
         self.assertEqual(result["title"], "おすすめ商品（処理中）")
         self.assertTrue(result["isRecommended"])
     
-    @patch('azure_agent_sample.project')
-    def test_no_assistant_messages_fallback(self, mock_project):
+    @patch('azure_agent_sample.get_project_client')
+    def test_no_assistant_messages_fallback(self, mock_get_project_client):
         """Test fallback response when no assistant messages found"""
+        mock_project = Mock()
+        mock_get_project_client.return_value = mock_project
+        
         mock_agent = Mock()
         mock_project.agents.get_agent.return_value = mock_agent
         
@@ -207,9 +225,12 @@ class TestAzureAgentSample(unittest.TestCase):
         self.assertEqual(result["title"], "おすすめ商品（メッセージなし）")
         self.assertTrue(result["isRecommended"])
     
-    @patch('azure_agent_sample.project')
-    def test_unexpected_status_fallback(self, mock_project):
+    @patch('azure_agent_sample.get_project_client')
+    def test_unexpected_status_fallback(self, mock_get_project_client):
         """Test fallback response for unexpected run status"""
+        mock_project = Mock()
+        mock_get_project_client.return_value = mock_project
+        
         mock_agent = Mock()
         mock_project.agents.get_agent.return_value = mock_agent
         
@@ -230,10 +251,12 @@ class TestAzureAgentSample(unittest.TestCase):
         self.assertEqual(result["title"], "おすすめ商品（ステータスエラー）")
         self.assertTrue(result["isRecommended"])
     
-    @patch('azure_agent_sample.project')
-    def test_exception_handling_fallback(self, mock_project):
+    @patch('azure_agent_sample.get_project_client')
+    def test_exception_handling_fallback(self, mock_get_project_client):
         """Test fallback response when an exception occurs"""
         # Mock to raise an exception
+        mock_project = Mock()
+        mock_get_project_client.return_value = mock_project
         mock_project.agents.get_agent.side_effect = Exception("Network error")
         
         result = get_recommendation()
@@ -249,7 +272,9 @@ class TestAzureAgentSample(unittest.TestCase):
                        "fallback-004", "fallback-005", "fallback-006", "fallback-007"]
         
         for fallback_id in fallback_ids:
-            with patch('azure_agent_sample.project') as mock_project:
+            with patch('azure_agent_sample.get_project_client') as mock_get_project_client:
+                mock_project = Mock()
+                mock_get_project_client.return_value = mock_project
                 # Setup to trigger specific fallback
                 if fallback_id == "fallback-005":
                     mock_project.agents.get_agent.side_effect = Exception("Test error")

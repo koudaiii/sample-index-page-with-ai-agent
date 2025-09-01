@@ -13,23 +13,33 @@ logger = logging.getLogger(__name__)
 # Load environment variables from .env file
 load_dotenv()
 
-# Initialize Azure AI Project Client
-project = AIProjectClient(
-    credential=DefaultAzureCredential(),
-    endpoint=os.getenv("PROJECT_ENDPOINT"))
+# Initialize Azure AI Project Client lazily
+project = None
+
+def get_project_client():
+    global project
+    if project is None:
+        endpoint = os.getenv("PROJECT_ENDPOINT")
+        if not endpoint:
+            raise ValueError("PROJECT_ENDPOINT environment variable is not set")
+        project = AIProjectClient(
+            credential=DefaultAzureCredential(),
+            endpoint=endpoint)
+    return project
 
 def main(query: str = None):
     try:
-        agent = project.agents.get_agent(os.getenv("AZURE_AI_AGENT_ID"))
+        project_client = get_project_client()
+        agent = project_client.agents.get_agent(os.getenv("AZURE_AI_AGENT_ID"))
         logger.info(f"Got agent: {agent.id}")
 
-        thread = project.agents.threads.create()
+        thread = project_client.agents.threads.create()
         logger.info(f"Created thread, ID: {thread.id}")
 
         # Use provided query or default query
         user_query = query if query else "真夏になったので、今あるおすすめの水筒を値段等含めて教えてください。"
         
-        message = project.agents.messages.create(
+        message = project_client.agents.messages.create(
             thread_id=thread.id,
             role="user",
             content=f'''{user_query}返答は、 content.json から次のようなフォーマットで一件 JSON 形式で出力してください。
@@ -46,7 +56,7 @@ def main(query: str = None):
         logger.info(f"Created message, ID: {message.id}")
 
         logger.info("Starting run creation and processing...")
-        run = project.agents.runs.create_and_process(
+        run = project_client.agents.runs.create_and_process(
             thread_id=thread.id,
             agent_id=agent.id)
         
@@ -76,10 +86,10 @@ def main(query: str = None):
             }
         elif run.status == "completed":
             logger.info("Run completed successfully, retrieving messages...")
-            messages = project.agents.messages.list(thread_id=thread.id, order=ListSortOrder.ASCENDING)
+            messages = project_client.agents.messages.list(thread_id=thread.id, order=ListSortOrder.ASCENDING)
             logger.info(f"Retrieved {len(list(messages))} messages")
 
-            messages = project.agents.messages.list(thread_id=thread.id, order=ListSortOrder.ASCENDING)
+            messages = project_client.agents.messages.list(thread_id=thread.id, order=ListSortOrder.ASCENDING)
             for message in messages:
                 logger.info(f"Processing message with role: {message.role}")
                 if message.role == "assistant" and message.text_messages:

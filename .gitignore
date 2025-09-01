@@ -33,3 +33,4 @@ pids
 
 backend/__pycache__*
 app_creation_output.json
+backend/.coverage

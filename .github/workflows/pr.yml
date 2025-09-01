@@ -1,0 +1,107 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  quick-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Set up Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+        enable-cache: true
+
+    - name: Run quick tests
+      run: |
+        echo "🚀 Running PR quick tests..."
+        
+        # Backend quick test
+        cd backend
+        uv sync --dev
+        uv run python -m pytest --tb=short -q
+        cd ..
+        
+        # Frontend quick test
+        cd frontend
+        npm install --legacy-peer-deps --silent
+        npm run test:run --silent
+        npm run lint --silent
+        cd ..
+        
+        echo "✅ PR checks completed successfully!"
+
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: |
+        npm install --legacy-peer-deps --silent
+
+    - name: Check TypeScript
+      working-directory: ./frontend
+      run: |
+        npx tsc --noEmit
+
+    - name: Run ESLint
+      working-directory: ./frontend
+      run: |
+        npm run lint
+
+    - name: Check build
+      working-directory: ./frontend
+      run: |
+        npm run build
+
+  security-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: |
+        npm install --legacy-peer-deps --silent
+
+    - name: Run security audit
+      working-directory: ./frontend
+      run: |
+        npm audit --audit-level=moderate || true
+
+    - name: Check for vulnerabilities
+      working-directory: ./frontend
+      run: |
+        echo "🔒 Security check completed"

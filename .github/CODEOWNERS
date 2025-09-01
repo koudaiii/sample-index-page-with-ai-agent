@@ -1,0 +1,25 @@
+# CODEOWNERS file for automatic code review assignments
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owners - require review for all changes
+* @koudaiii
+
+# Backend specific
+backend/ @koudaiii
+backend/**/*.py @koudaiii
+backend/pyproject.toml @koudaiii
+
+# Frontend specific  
+frontend/ @koudaiii
+frontend/**/*.tsx @koudaiii
+frontend/**/*.ts @koudaiii
+frontend/package.json @koudaiii
+
+# CI/CD configuration
+.github/ @koudaiii
+script/ @koudaiii
+script/ci-test @koudaiii
+
+# Documentation
+*.md @koudaiii
+CLAUDE.md @koudaiii

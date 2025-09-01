@@ -50,11 +50,27 @@ def main():
         logger.info(f"Run completed with status: {run.status}")
         
         if run.status == "failed":
-            logger.error(f"Run failed: {run.last_error}")
-            return None
+            logger.error(f"Run failed: {run.last_error}, returning fallback data")
+            return {
+                "id": "fallback-006",
+                "title": "おすすめ商品（実行失敗）",
+                "price": 0,
+                "rating": 0,
+                "imageUrl": "/placeholder-image.jpg",
+                "category": "general",
+                "isRecommended": True
+            }
         elif run.status == "in_progress":
-            logger.warning(f"Run is still in progress (status: {run.status}). This might cause inconsistent results.")
-            return None
+            logger.warning(f"Run is still in progress (status: {run.status}). This might cause inconsistent results. Returning fallback data.")
+            return {
+                "id": "fallback-007",
+                "title": "おすすめ商品（処理中）",
+                "price": 0,
+                "rating": 0,
+                "imageUrl": "/placeholder-image.jpg",
+                "category": "general",
+                "isRecommended": True
+            }
         elif run.status == "completed":
             logger.info("Run completed successfully, retrieving messages...")
             messages = project.agents.messages.list(thread_id=thread.id, order=ListSortOrder.ASCENDING)
@@ -75,21 +91,63 @@ def main():
                             logger.info(f"Successfully parsed JSON recommendation: {result}")
                             return result
                         except json.JSONDecodeError as e:
-                            logger.error(f"Failed to parse JSON: {e}")
-                            return None
+                            logger.error(f"Failed to parse JSON: {e}, returning fallback data")
+                            # Return fallback recommendation when JSON parsing fails
+                            return {
+                                "id": "fallback-002",
+                                "title": "おすすめ商品（解析エラー）",
+                                "price": 0,
+                                "rating": 0,
+                                "imageUrl": "/placeholder-image.jpg",
+                                "category": "general",
+                                "isRecommended": True
+                            }
                     else:
-                        logger.warning("No JSON found in assistant response")
-                        return None
+                        logger.warning("No JSON found in assistant response, returning fallback data")
+                        # Return fallback recommendation when JSON parsing fails
+                        return {
+                            "id": "fallback-001",
+                            "title": "おすすめ商品（一時的に利用できません）",
+                            "price": 0,
+                            "rating": 0,
+                            "imageUrl": "/placeholder-image.jpg",
+                            "category": "general",
+                            "isRecommended": True
+                        }
             
-            logger.warning("No assistant messages found")
-            return None
+            logger.warning("No assistant messages found, returning fallback data")
+            return {
+                "id": "fallback-003",
+                "title": "おすすめ商品（メッセージなし）",
+                "price": 0,
+                "rating": 0,
+                "imageUrl": "/placeholder-image.jpg",
+                "category": "general",
+                "isRecommended": True
+            }
         else:
-            logger.warning(f"Unexpected run status: {run.status}")
-            return None
+            logger.warning(f"Unexpected run status: {run.status}, returning fallback data")
+            return {
+                "id": "fallback-004",
+                "title": "おすすめ商品（ステータスエラー）",
+                "price": 0,
+                "rating": 0,
+                "imageUrl": "/placeholder-image.jpg",
+                "category": "general",
+                "isRecommended": True
+            }
             
     except Exception as e:
-        logger.error(f"Error in main function: {e}")
-        return None
+        logger.error(f"Error in main function: {e}, returning fallback data")
+        return {
+            "id": "fallback-005",
+            "title": "おすすめ商品（システムエラー）",
+            "price": 0,
+            "rating": 0,
+            "imageUrl": "/placeholder-image.jpg",
+            "category": "general",
+            "isRecommended": True
+        }
 
 def get_recommendation():
     return main()

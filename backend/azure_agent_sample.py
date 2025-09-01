@@ -18,7 +18,7 @@ project = AIProjectClient(
     credential=DefaultAzureCredential(),
     endpoint=os.getenv("PROJECT_ENDPOINT"))
 
-def main():
+def main(query: str = None):
     try:
         agent = project.agents.get_agent(os.getenv("AZURE_AI_AGENT_ID"))
         logger.info(f"Got agent: {agent.id}")
@@ -26,10 +26,13 @@ def main():
         thread = project.agents.threads.create()
         logger.info(f"Created thread, ID: {thread.id}")
 
+        # Use provided query or default query
+        user_query = query if query else "真夏になったので、今あるおすすめの水筒を値段等含めて教えてください。"
+        
         message = project.agents.messages.create(
             thread_id=thread.id,
             role="user",
-            content=f'''真夏になったので、今あるおすすめの水筒を値段等含めて教えてください。返答は、 content.json から次のようなフォーマットで一件 JSON 形式で出力してください。
+            content=f'''{user_query}返答は、 content.json から次のようなフォーマットで一件 JSON 形式で出力してください。
                 {{
                 "id": "",
                 "title": "",
@@ -149,8 +152,8 @@ def main():
             "isRecommended": True
         }
 
-def get_recommendation():
-    return main()
+def get_recommendation(query: str = None):
+    return main(query)
 
 if __name__ == "__main__":
     result = get_recommendation()

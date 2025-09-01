@@ -9,8 +9,12 @@ import "./main.css"
 import "./styles/theme.css"
 import "./index.css"
 
+// URLパラメータからクエリを取得
+const urlParams = new URLSearchParams(window.location.search);
+const query = urlParams.get('query') || undefined;
+
 createRoot(document.getElementById('root')!).render(
   <ErrorBoundary FallbackComponent={ErrorFallback}>
-    <App />
+    <App query={query} />
    </ErrorBoundary>
 )

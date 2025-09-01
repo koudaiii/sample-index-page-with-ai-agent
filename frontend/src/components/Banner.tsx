@@ -13,7 +13,11 @@ interface BannerItem {
   color: string
 }
 
-export function Banner() {
+interface BannerProps {
+  query?: string;
+}
+
+export function Banner({ query }: BannerProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [bannerItems, setBannerItems] = useState<BannerItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -22,7 +26,13 @@ export function Banner() {
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        const response = await fetch(API_ENDPOINTS.BANNERS)
+        let url = API_ENDPOINTS.BANNERS;
+        if (query) {
+          const params = new URLSearchParams({ query });
+          url = `${API_ENDPOINTS.BANNERS}?${params}`;
+        }
+        
+        const response = await fetch(url)
         if (!response.ok) {
           throw new Error('Failed to fetch banners')
         }
@@ -36,7 +46,7 @@ export function Banner() {
     }
 
     fetchBanners()
-  }, [])
+  }, [query])
 
   useEffect(() => {
     if (bannerItems.length === 0) return

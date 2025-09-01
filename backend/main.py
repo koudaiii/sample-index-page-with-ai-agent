@@ -78,14 +78,14 @@ async def root():
     return {"message": "Content Index API is running"}
 
 @app.get("/api/banners", response_model=List[BannerItem])
-async def get_banners():
+async def get_banners(query: Optional[str] = None):
     """Get all banner items with Azure AI recommendation"""
     # Only try to get AI recommendation if Azure agent is available
     if AZURE_AGENT_AVAILABLE:
         try:
             logger.info("Attempting to get AI recommendation")
-            # Get recommendation from Azure AI agent
-            recommendation = get_recommendation()
+            # Get recommendation from Azure AI agent with query parameter
+            recommendation = get_recommendation(query)
             
             # If we get a recommendation, create a banner from it
             if recommendation:

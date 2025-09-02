@@ -83,7 +83,7 @@ describe('Banner', () => {
         title: 'AI Recommended Banner',
         subtitle: 'AI Generated',
         imageUrl: '/ai.jpg',
-        tag: 'AI推薦',
+        tag: 'AIモニター募集中',
         color: 'orange'
       }
     ]
@@ -107,7 +107,7 @@ describe('Banner', () => {
         title: 'Custom AI Banner',
         subtitle: 'Custom Query Result',
         imageUrl: '/custom.jpg',
-        tag: 'AI推薦',
+        tag: 'AIモニター募集中',
         color: 'green'
       }
     ]

@@ -70,7 +70,7 @@ class TestAPIIntegration:
         assert ai_banner["title"] == "保温水筒 500ml"
         assert "価格: ¥2980" in ai_banner["subtitle"]
         assert "評価: 4.5" in ai_banner["subtitle"]
-        assert ai_banner["tag"] == "AI推薦"
+        assert ai_banner["tag"] == "AIモニター募集中"
         assert ai_banner["color"] == "oklch(0.7 0.15 40)"
         
         # Verify the AI agent was called

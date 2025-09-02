@@ -1,3 +1,4 @@
+from inspect import trace
 import os
 import json
 import re
@@ -5,7 +6,16 @@ import logging
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
 from azure.ai.agents.models import ListSortOrder
+from azure.core.settings import settings
+
 from dotenv import load_dotenv
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor, ConsoleSpanExporter
+
+from azure.monitor.opentelemetry import configure_azure_monitor
+from azure.ai.agents.telemetry import AIAgentsInstrumentor
+AIAgentsInstrumentor().instrument()
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -30,37 +40,50 @@ def get_project_client():
 def main(query: str = None):
     try:
         project_client = get_project_client()
-        agent = project_client.agents.get_agent(os.getenv("AZURE_AI_AGENT_ID"))
-        logger.info(f"Got agent: {agent.id}")
 
-        thread = project_client.agents.threads.create()
-        logger.info(f"Created thread, ID: {thread.id}")
+        connection_string = project_client.telemetry.get_application_insights_connection_string()
+        configure_azure_monitor(connection_string=connection_string) #enable telemetry collection
 
-        # Use provided query or default query
-        user_query = query if query else "真夏になったので、今あるおすすめの水筒を値段等含めて教えてください。"
+        settings.tracing_implementation = "opentelemetry"
+
+        # Setup tracing to console
+        span_exporter = ConsoleSpanExporter()
+        tracer_provider = TracerProvider()
+        tracer_provider.add_span_processor(SimpleSpanProcessor(span_exporter))
+        trace.set_tracer_provider(tracer_provider)
+        tracer = trace.get_tracer(__name__)
+        with tracer.start_as_current_span("example-tracing"):    
+            agent = project_client.agents.get_agent(os.getenv("AZURE_AI_AGENT_ID"))
+            logger.info(f"Got agent: {agent.id}")
+
+            thread = project_client.agents.threads.create()
+            logger.info(f"Created thread, ID: {thread.id}")
+
+            # Use provided query or default query
+            user_query = query if query else "真夏になったので、今あるおすすめの水筒を値段等含めて教えてください。"
         
-        message = project_client.agents.messages.create(
-            thread_id=thread.id,
-            role="user",
-            content=f'''{user_query}返答は、 content.json から次のようなフォーマットで一件 JSON 形式で出力してください。
-                {{
-                "id": "",
-                "title": "",
-                "price": 0,
-                "rating": 0,
-                "imageUrl": "",
-                "category": "",
-                "isRecommended": false
-              }}'''
-        )
-        logger.info(f"Created message, ID: {message.id}")
+            message = project_client.agents.messages.create(
+                thread_id=thread.id,
+                role="user",
+                content=f'''{user_query}返答は、 content.json から次のようなフォーマットで一件 JSON 形式で出力してください。
+                    {{
+                    "id": "",
+                    "title": "",
+                    "price": 0,
+                    "rating": 0,
+                    "imageUrl": "",
+                    "category": "",
+                    "isRecommended": false
+                  }}'''
+            )
+            logger.info(f"Created message, ID: {message.id}")
 
-        logger.info("Starting run creation and processing...")
-        run = project_client.agents.runs.create_and_process(
-            thread_id=thread.id,
-            agent_id=agent.id)
+            logger.info("Starting run creation and processing...")
+            run = project_client.agents.runs.create_and_process(
+                thread_id=thread.id,
+                agent_id=agent.id)
         
-        logger.info(f"Run completed with status: {run.status}")
+            logger.info(f"Run completed with status: {run.status}")
         
         if run.status == "failed":
             logger.error(f"Run failed: {run.last_error}, returning fallback data")

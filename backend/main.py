@@ -17,19 +17,14 @@ from models import BannerItem, ContentItem
 # Load environment variables from .env file
 load_dotenv()
 
-# Check if Azure agent should be enabled via environment variable
-AZURE_AGENT_AVAILABLE = os.getenv("AZURE_AGENT_AVAILABLE", "false").lower() == "true"
-
 # Optional import for Azure agent - make it graceful
-if AZURE_AGENT_AVAILABLE:
-    try:
-        from azure_agent import get_recommendation
-        logger.info("Azure agent enabled and imported successfully")
-    except ImportError as e:
-        AZURE_AGENT_AVAILABLE = False
-        logger.error(f"Azure agent import failed: {e} - running without AI recommendations")
-else:
-    logger.info("Azure agent disabled via environment variable")
+try:
+    from azure_agent import get_recommendation
+    AZURE_AGENT_IMPORT_AVAILABLE = True
+    logger.info("Azure agent imported successfully")
+except ImportError as e:
+    AZURE_AGENT_IMPORT_AVAILABLE = False
+    logger.error(f"Azure agent import failed: {e} - AI recommendations will not be available")
 
 # Load data on startup
 banners_data: List[BannerItem] = []
@@ -78,10 +73,15 @@ async def root():
     return {"message": "Content Index API is running"}
 
 @app.get("/api/banners", response_model=List[BannerItem])
-async def get_banners(query: Optional[str] = None):
-    """Get all banner items with Azure AI recommendation"""
-    # Only try to get AI recommendation if Azure agent is available
-    if AZURE_AGENT_AVAILABLE:
+async def get_banners(query: Optional[str] = None, use_ai: bool = False):
+    """Get all banner items with optional Azure AI recommendation
+    
+    Args:
+        query: Optional query parameter for AI recommendation content
+        use_ai: Boolean flag to enable/disable AI recommendations
+    """
+    # Only try to get AI recommendation if explicitly requested and Azure agent is importable
+    if use_ai and AZURE_AGENT_IMPORT_AVAILABLE:
         try:
             logger.info("Attempting to get AI recommendation")
             # Get recommendation from Azure AI agent with query parameter
@@ -106,8 +106,10 @@ async def get_banners(query: Optional[str] = None):
         except Exception as e:
             # Log error but continue with regular banners
             logger.error(f"Failed to get AI recommendation: {e}")
+    elif use_ai and not AZURE_AGENT_IMPORT_AVAILABLE:
+        logger.warning("AI recommendation requested but Azure agent is not available")
     else:
-        logger.info("Azure agent not available, returning regular banners only")
+        logger.info("AI recommendation not requested, returning regular banners only")
     
     logger.info("Returning regular banners without AI recommendation")
     return banners_data

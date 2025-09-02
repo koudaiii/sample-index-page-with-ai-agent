@@ -15,9 +15,10 @@ interface BannerItem {
 
 interface BannerProps {
   query?: string;
+  useAi?: boolean;
 }
 
-export function Banner({ query }: BannerProps) {
+export function Banner({ query, useAi }: BannerProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [bannerItems, setBannerItems] = useState<BannerItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -26,9 +27,18 @@ export function Banner({ query }: BannerProps) {
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        let url = API_ENDPOINTS.BANNERS;
+        const params = new URLSearchParams();
+        
         if (query) {
-          const params = new URLSearchParams({ query });
+          params.append('query', query);
+        }
+        
+        if (useAi) {
+          params.append('use_ai', 'true');
+        }
+        
+        let url = API_ENDPOINTS.BANNERS;
+        if (params.toString()) {
           url = `${API_ENDPOINTS.BANNERS}?${params}`;
         }
         
@@ -46,7 +56,7 @@ export function Banner({ query }: BannerProps) {
     }
 
     fetchBanners()
-  }, [query])
+  }, [query, useAi])
 
   useEffect(() => {
     if (bannerItems.length === 0) return

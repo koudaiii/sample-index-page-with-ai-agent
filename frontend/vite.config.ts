@@ -22,4 +22,11 @@ export default defineConfig({
       '@': resolve(projectRoot, 'src')
     }
   },
+  server: {
+    allowedHosts: [
+      "localhost",
+      ".azurewebsites.net",
+      "koudaiii.com"
+    ]
+  },
 });

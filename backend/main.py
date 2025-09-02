@@ -95,7 +95,7 @@ async def get_banners(query: Optional[str] = None, use_ai: bool = False):
                     title=recommendation.get('title', 'AI おすすめ商品'),
                     subtitle=f"価格: ¥{recommendation.get('price', 0)} | 評価: {recommendation.get('rating', 0)}",
                     imageUrl=recommendation.get('imageUrl', '/placeholder-image.jpg'),
-                    tag="AI推薦",
+                    tag="AIモニター募集中",
                     color="oklch(0.7 0.15 40)"  # Coral orange from design system
                 )
                 # Insert recommendation banner at the beginning

@@ -26,7 +26,7 @@ export default defineConfig({
     allowedHosts: [
       "localhost",
       ".azurewebsites.net",
-      "koudaiii.com"
+      ".koudaiii.com"
     ]
   },
 });

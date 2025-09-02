@@ -23,6 +23,15 @@ echo "Docker Compose Environment:"
 echo "Frontend: http://localhost"
 echo "Backend API: http://localhost:8000"
 echo "API Documentation: http://localhost:8000/docs"
+echo "# 通常のバナー表示（AI推薦なし）"
+echo "http://localhost/"
+echo
+echo "# AI推薦を有効にしたバナー表示"
+echo "http://localhost/?use_ai=true"
+echo  
+echo "# カスタムクエリでAI推薦を表示"
+echo "http://localhost/?query=おすすめの水筒&use_ai=true"
+echo  
 
 ## run environment with docker-compose
 docker-compose up -d

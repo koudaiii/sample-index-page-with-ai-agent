@@ -56,5 +56,62 @@
     "imageUrl": "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400&h=400&fit=crop",
     "category": "テック",
     "isSale": true
+  },
+  {
+    "id": "7",
+    "title": "ノイズキャンセリングイヤホン",
+    "price": 12800,
+    "originalPrice": 15800,
+    "rating": 4.6,
+    "imageUrl": "https://live.staticflickr.com/8057/8187074080_d7911850d0.jpg",
+    "category": "オーディオ",
+    "isSale": true
+  },
+  {
+    "id": "8",
+    "title": "スマートホームライト",
+    "price": 6200,
+    "rating": 4.3,
+    "imageUrl": "https://live.staticflickr.com/4590/25550212328_9ba8f8e1fa.jpg",
+    "category": "ホーム",
+    "isRecommended": true
+  },
+  {
+    "id": "9",
+    "title": "折りたたみ式エコバッグ",
+    "price": 1800,
+    "rating": 4.2,
+    "imageUrl": "https://live.staticflickr.com/1787/42448810905_c40d91751d.jpg",
+    "category": "バッグ",
+    "isNew": true
+  },
+  {
+    "id": "10",
+    "title": "ポータブルコーヒーメーカー",
+    "price": 9800,
+    "originalPrice": 12800,
+    "rating": 4.7,
+    "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Italian-coffee-maker.svg/500px-Italian-coffee-maker.svg.png",
+    "category": "キッチン",
+    "isSale": true,
+    "isRecommended": true
+  },
+  {
+    "id": "11",
+    "title": "フィットネストラッカー Pro",
+    "price": 15800,
+    "rating": 4.5,
+    "imageUrl": "https://live.staticflickr.com/65535/49062149021_52d249025a.jpg",
+    "category": "ウェアラブル",
+    "isNew": true
+  },
+  {
+    "id": "12",
+    "title": "USB-C ハブステーション",
+    "price": 7200,
+    "rating": 4.4,
+    "imageUrl": "https://live.staticflickr.com/7363/28147545245_f64c6be34e.jpg",
+    "category": "テック",
+    "isRecommended": true
   }
 ]

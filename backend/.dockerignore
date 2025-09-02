@@ -1,6 +1,5 @@
 *
 !azure_agent.py
-!azure_agent_sample.py
 !main.py
 !models.py
 !pyproject.toml

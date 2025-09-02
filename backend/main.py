@@ -23,7 +23,7 @@ AZURE_AGENT_AVAILABLE = os.getenv("AZURE_AGENT_AVAILABLE", "false").lower() == "
 # Optional import for Azure agent - make it graceful
 if AZURE_AGENT_AVAILABLE:
     try:
-        from azure_agent_sample import get_recommendation
+        from azure_agent import get_recommendation
         logger.info("Azure agent enabled and imported successfully")
     except ImportError as e:
         AZURE_AGENT_AVAILABLE = False

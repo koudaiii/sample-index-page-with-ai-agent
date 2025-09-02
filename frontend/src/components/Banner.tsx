@@ -63,7 +63,7 @@ export function Banner({ query, useAi }: BannerProps) {
     
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % bannerItems.length)
-    }, 3000)
+    }, 5000)
 
     return () => clearInterval(timer)
   }, [bannerItems.length])

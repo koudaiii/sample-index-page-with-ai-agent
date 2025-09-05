@@ -24,8 +24,12 @@
 
 1. [Azure AI Foundry](https://learn.microsoft.com/ja-jp/azure/ai-foundry/agents/environment-setup)
 
-- `PROJECT_ENDPOINT`: 
-- `AZURE_AI_AGENT_ID`: 
+Add these environment variables to `backend/.env` 
+
+- Create an agent from the project and obtain the following values:
+   - `PROJECT_ENDPOINT`: 
+   - `AZURE_AI_AGENT_ID`: 
+- Upload `backend/data/content.js` to register knowledge
 
 2. Create account for application
 

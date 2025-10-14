@@ -37,11 +37,11 @@ export function Banner({ query, useAi }: BannerProps) {
           params.append('use_ai', 'true');
         }
         
-        let url = API_ENDPOINTS.BANNERS;
+        let url: string = API_ENDPOINTS.BANNERS;
         if (params.toString()) {
           url = `${API_ENDPOINTS.BANNERS}?${params}`;
         }
-        
+
         const response = await fetch(url)
         if (!response.ok) {
           throw new Error('Failed to fetch banners')

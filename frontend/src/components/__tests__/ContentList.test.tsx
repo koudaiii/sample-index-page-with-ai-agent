@@ -10,7 +10,7 @@ vi.mock('@/lib/config', () => ({
 }))
 
 // Mock fetch
-global.fetch = vi.fn()
+globalThis.fetch = vi.fn()
 
 const mockContentData = [
   {
